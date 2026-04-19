@@ -1,8 +1,8 @@
-name: Tara Assistant
-version: 1.1.0
+name: Tara Assistant (ingress fix)
+version: 1.1.1-dev
 slug: tara_assistant
-description: AI-powered smart home assistant that learns your routines and generates Home Assistant automations
-url: https://github.com/TaraHome/taraassistant-public
+description: AI-powered smart home assistant - patched for HA ingress support
+url: https://github.com/bgoldsworthy/taraassistant-public
 arch:
   - amd64
   - aarch64
