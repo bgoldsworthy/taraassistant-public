@@ -32,8 +32,9 @@ class SetupRedirectMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Check if configured
-        storage = ConfigStorage()
-        if not storage.exists():
+        from app.config import is_configured
+        if not is_configured():
+            ingress_path = request.headers.get("X-Ingress-Path", "")
             # For API requests, return JSON error
             if path.startswith("/api/"):
                 return JSONResponse(
@@ -41,10 +42,10 @@ class SetupRedirectMiddleware(BaseHTTPMiddleware):
                     content={
                         "error": "Application not configured",
                         "message": "Please complete the setup wizard first.",
-                        "setup_url": "/setup"
+                        "setup_url": f"{ingress_path}/setup"
                     }
                 )
             # For HTML requests, redirect to setup
-            return RedirectResponse(url="/setup", status_code=307)
+            return RedirectResponse(url=f"{ingress_path}/setup", status_code=307)
 
         return await call_next(request)

@@ -62,7 +62,12 @@ def clear_settings_cache() -> None:
 
 
 def is_configured() -> bool:
-    """Check if application has been configured via setup wizard."""
+    """Check if application has been configured via setup wizard or add-on options."""
+    import os
+    # When running as an HA add-on, configuration comes from the add-on
+    # options tab (environment variables), not the setup wizard.
+    if os.environ.get("SUPERVISOR_TOKEN"):
+        return True
     from app.setup.storage import ConfigStorage
     storage = ConfigStorage()
     return storage.exists()

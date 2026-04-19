@@ -4,7 +4,7 @@ import logging
 import re
 from contextlib import asynccontextmanager
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -286,9 +286,10 @@ class ChatResponse(BaseModel):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def home():
+async def home(request: Request):
     """Serve the chat interface."""
     settings = get_settings()
+    ingress_path = request.headers.get("X-Ingress-Path", "")
     return f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -296,6 +297,21 @@ async def home():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{settings.app_name}</title>
+    <script>
+        // HA ingress support: rewrite absolute fetch paths to go through the ingress proxy
+        (function() {{
+            var ingressPath = '{ingress_path}';
+            if (ingressPath) {{
+                var _fetch = window.fetch;
+                window.fetch = function(url) {{
+                    if (typeof url === 'string' && url.startsWith('/')) {{
+                        url = ingressPath + url;
+                    }}
+                    return _fetch.apply(this, arguments);
+                }};
+            }}
+        }})();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1280,7 +1296,7 @@ async def home():
                         <span class="token-summary" id="token-summary">Tokens: --</span>
                         <button class="header-btn" onclick="toggleTheme()" id="theme-toggle">Dark mode</button>
                         <button class="header-btn panel-toggle" onclick="togglePanel()" id="panel-toggle">Insights</button>
-                        <a href="/settings" class="settings-link">Settings</a>
+                        <a href="{ingress_path}/settings" class="settings-link">Settings</a>
                     </div>
                 </div>
             </header>
